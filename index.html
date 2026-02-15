@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>zerodevbuilds</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="avatar-wrap">
+        <div class="avatar-glow"></div>
+        <img class="avatar" id="avatar" src="" alt="zerodevbuilds avatar" />
+      </div>
+      <div class="header-text">
+        <h1 class="username"><span>//</span> zerodevbuilds</h1>
+        <p class="tagline" id="tagline">Loading profile…</p>
+        <p class="bio" id="bio"></p>
+        <div class="header-stats">
+          <div class="stat">
+            <span class="stat-val" id="stat-repos">—</span>
+            <span class="stat-label">Repos</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val" id="stat-followers">—</span>
+            <span class="stat-label">Followers</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val" id="stat-following">—</span>
+            <span class="stat-label">Following</span>
+          </div>
+        </div>
+        <a class="gh-link" href="https://github.com/zerodevbuilds" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+          github.com/zerodevbuilds
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter</span>
+    <div class="filters" id="lang-filters">
+      <button class="filter-btn active" data-lang="all">All</button>
+    </div>
+    <div class="sort-wrap">
+      <span class="filter-label">Sort</span>
+      <select class="sort-select" id="sort-select">
+        <option value="updated">Recently updated</option>
+        <option value="stars">Most stars</option>
+        <option value="forks">Most forks</option>
+        <option value="name">Name A–Z</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- REPO GRID -->
+  <div class="repo-grid" id="repo-grid">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Fetching repositories…</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>// <a href="https://github.com/zerodevbuilds" target="_blank">zerodevbuilds</a> on GitHub</p>
+    <p>Powered by <a href="https://docs.github.com/en/rest" target="_blank">GitHub REST API</a></p>
+  </footer>
+
+</div>
+
+<script>
+  const USERNAME = 'zerodevbuilds';
+  let allRepos = [];
+  let activeFilter = 'all';
+
+  const LANG_COLORS = {
+    JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5',
+    HTML: '#e34c26', CSS: '#563d7c', Shell: '#89e051',
+    Rust: '#dea584', Go: '#00ADD8', Ruby: '#701516',
+    Java: '#b07219', 'C++': '#f34b7d', C: '#555555',
+    Vue: '#41b883', Svelte: '#ff3e00', Kotlin: '#A97BFF',
+    Swift: '#F05138', PHP: '#4F5D95', Dart: '#00B4AB',
+    Astro: '#ff5a03',
+  };
+
+  function relativeTime(dateStr) {
+    const diff = Date.now() - new Date(dateStr);
+    const m = Math.floor(diff / 60000);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    const d = Math.floor(h / 24);
+    if (d < 30) return `${d}d ago`;
+    const mo = Math.floor(d / 30);
+    if (mo < 12) return `${mo}mo ago`;
+    return `${Math.floor(mo / 12)}y ago`;
+  }
+
+  function starIcon() {
+    return `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>`;
+  }
+
+  function forkIcon() {
+    return `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"/></svg>`;
+  }
+
+  function buildCard(repo, delay) {
+    const langColor = LANG_COLORS[repo.language] || '#6e7681';
+    const topics = repo.topics?.slice(0, 4) || [];
+
+    return `
+      <div class="repo-card" style="animation-delay:${delay}ms">
+        <div class="card-top">
+          <a class="repo-name" href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a>
+          ${repo.fork ? '<span class="fork-badge">fork</span>' : ''}
+        </div>
+        ${repo.description ? `<p class="repo-desc">${repo.description}</p>` : '<p class="repo-desc" style="opacity:0.35;font-style:italic;">No description</p>'}
+        ${topics.length ? `<div class="repo-topics">${topics.map(t => `<span class="topic">${t}</span>`).join('')}</div>` : ''}
+        <div class="card-footer">
+          ${repo.language ? `
+            <span class="meta">
+              <span class="lang-dot" style="background:${langColor}"></span>
+              ${repo.language}
+            </span>` : ''}
+          <span class="meta">${starIcon()} ${repo.stargazers_count}</span>
+          <span class="meta">${forkIcon()} ${repo.forks_count}</span>
+          <span class="updated">${relativeTime(repo.updated_at)}</span>
+        </div>
+      </div>`;
+  }
+
+  function renderRepos() {
+    const grid = document.getElementById('repo-grid');
+    const sort = document.getElementById('sort-select').value;
+
+    let repos = activeFilter === 'all'
+      ? [...allRepos]
+      : allRepos.filter(r => r.language === activeFilter);
+
+    switch (sort) {
+      case 'stars':  repos.sort((a,b) => b.stargazers_count - a.stargazers_count); break;
+      case 'forks':  repos.sort((a,b) => b.forks_count - a.forks_count); break;
+      case 'name':   repos.sort((a,b) => a.name.localeCompare(b.name)); break;
+      default:       repos.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
+    }
+
+    if (!repos.length) {
+      grid.innerHTML = `<div class="state-msg"><span class="icon">◻</span>No repos found for this filter.</div>`;
+      return;
+    }
+
+    grid.innerHTML = repos.map((r, i) => buildCard(r, i * 40)).join('');
+  }
+
+  function buildLangFilters(repos) {
+    const langs = [...new Set(repos.map(r => r.language).filter(Boolean))].sort();
+    const container = document.getElementById('lang-filters');
+    langs.forEach(lang => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.dataset.lang = lang;
+      btn.textContent = lang;
+      container.appendChild(btn);
+    });
+
+    container.addEventListener('click', e => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.lang;
+      renderRepos();
+    });
+  }
+
+  async function fetchAll() {
+    try {
+      // Fetch profile
+      const profileRes = await fetch(`https://api.github.com/users/${USERNAME}`);
+      if (!profileRes.ok) throw new Error('Profile fetch failed');
+      const profile = await profileRes.json();
+
+      document.getElementById('avatar').src = profile.avatar_url;
+      document.getElementById('tagline').textContent = profile.location
+        ? `📍 ${profile.location}`
+        : 'Open source builder';
+      document.getElementById('bio').textContent = profile.bio || '';
+      document.getElementById('stat-repos').textContent = profile.public_repos;
+      document.getElementById('stat-followers').textContent = profile.followers;
+      document.getElementById('stat-following').textContent = profile.following;
+
+      // Fetch repos (up to 100)
+      const reposRes = await fetch(
+        `https://api.github.com/users/${USERNAME}/repos?per_page=100&type=public`
+      );
+      if (!reposRes.ok) throw new Error('Repos fetch failed');
+      allRepos = await reposRes.json();
+
+      buildLangFilters(allRepos);
+      renderRepos();
+
+      document.getElementById('sort-select').addEventListener('change', renderRepos);
+
+    } catch (err) {
+      document.getElementById('repo-grid').innerHTML = `
+        <div class="state-msg">
+          <span class="icon">⚠</span>
+          Could not load repos. GitHub API may be rate-limited — try again in a moment.
+        </div>`;
+      console.error(err);
+    }
+  }
+
+  fetchAll();
+</script>
+</body>
+</html>
